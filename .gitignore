@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+.env
+*.egg-info/
+dist/
+build/
+.streamlit/
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/settings.json
+100-day-plan-*.json
+100-day-plan-*.csv
+
+# Note: plan_data.db IS tracked (shared team data stored in git)
+# Local backups only:
+*.db.backup
+*.db.bak

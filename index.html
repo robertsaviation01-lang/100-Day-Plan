@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100-Day Plan Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>100-Day Execution Plan</h1>
+        <div class="header-controls">
+            <button onclick="app.resetData()" class="btn-secondary">Reset Sample Data</button>
+            <button onclick="app.exportPlanData()" class="btn-secondary">Export Plan Data</button>
+            <button onclick="app.importPlanData()" class="btn-secondary">Import Plan Data</button>
+            <button onclick="app.exportCSV()" class="btn-secondary">Export CSV Report</button>
+            <button onclick="app.exportBoardPackCSV()" class="btn-secondary">Export Board Pack CSV</button>
+            <button onclick="window.print()" class="btn-secondary">Print Summary</button>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- SECTION I: Phase Tracker -->
+        <section class="section section-i">
+            <h2>Section I: Phase Progress Tracker</h2>
+            
+            <div class="phase-filter-controls">
+                <label>Filter by Status:</label>
+                <select id="statusFilter" onchange="app.updatePhaseDisplay()">
+                    <option value="">All Statuses</option>
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="At Risk">At Risk</option>
+                </select>
+                <label>Phase:</label>
+                <select id="phaseFilter" onchange="app.updatePhaseDisplay()">
+                    <option value="">All Phases</option>
+                </select>
+            </div>
+
+            <div id="phaseTracker" class="phase-tracker">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- SECTION II: Task Management -->
+        <section class="section section-ii">
+            <h2>Section II: Task Management & Updates</h2>
+            
+            <div class="task-form">
+                <h3>Update Task Progress</h3>
+                <form onsubmit="app.updateTask(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskSelect">Select Task:</label>
+                            <select id="taskSelect" required>
+                                <option value="">-- Choose a task --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskStatus">Status:</label>
+                            <select id="taskStatus" required>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="At Risk">At Risk</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="percentComplete">% Complete:</label>
+                            <input type="number" id="percentComplete" min="0" max="100" value="0" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="taskNotes">Notes:</label>
+                            <textarea id="taskNotes" rows="3" placeholder="Add progress notes..."></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Task</button>
+                </form>
+            </div>
+
+            <div class="activity-feed">
+                <h3>Recent Activity</h3>
+                <div id="activityLog" class="activity-log">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION III: Gantt Chart -->
+        <section class="section section-iii">
+            <h2>Section III: Gantt Chart - Timeline Visualization</h2>
+            
+            <div class="gantt-controls">
+                <div class="control-group">
+                    <label for="ganttWeekRange">Week Range:</label>
+                    <input type="number" id="ganttWeekRange" min="4" max="20" value="14" onchange="app.updateGanttChart()">
+                </div>
+                <div class="control-group">
+                    <label for="ganttStartWeek">Start Week:</label>
+                    <input type="number" id="ganttStartWeek" min="1" value="1" onchange="app.updateGanttChart()">
+                </div>
+                <div class="control-group">
+                    <label for="ganttCellWidth">Cell Width (px):</label>
+                    <input type="number" id="ganttCellWidth" min="10" max="50" value="20" onchange="app.updateGanttChart()">
+                </div>
+                <div class="control-group">
+                    <label><input type="checkbox" id="showCriticalPath" onchange="app.updateGanttChart()"> Show Critical Path Only</label>
+                </div>
+                <div class="control-group">
+                    <label><input type="checkbox" id="showDependencies" checked onchange="app.updateGanttChart()"> Show Dependencies</label>
+                </div>
+            </div>
+
+            <div id="criticalSummary" class="critical-summary">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div class="gantt-container">
+                <div class="gantt-chart" id="ganttChart">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION IV: Board View -->
+        <section class="section section-iv">
+            <h2>Section IV: Board View</h2>
+            <div id="boardView" class="board-view">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

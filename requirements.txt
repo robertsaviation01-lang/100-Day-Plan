@@ -1,0 +1,6 @@
+streamlit==1.28.0
+pandas==2.0.3
+plotly==5.16.1
+gspread==6.1.2
+google-auth==2.35.0
+# SQLite3 is built into Python, no additional package needed for local fallback

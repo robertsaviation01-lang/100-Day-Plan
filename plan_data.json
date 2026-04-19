@@ -1,0 +1,686 @@
+{
+  "phases": [
+    {
+      "id": "phase1",
+      "name": "SPV Activation & Treasury Setup (Day 0-20)",
+      "order": 1
+    },
+    {
+      "id": "phase2",
+      "name": "Intercompany Loan Execution (Day 15-35)",
+      "order": 2
+    },
+    {
+      "id": "phase3",
+      "name": "Demonstrator Acquisition & PMI (Day 30-70)",
+      "order": 3
+    },
+    {
+      "id": "phase4",
+      "name": "BEST Procurement & Engineering (Day 35-100)",
+      "order": 4
+    },
+    {
+      "id": "phase5",
+      "name": "UK OpCo Demonstrator Setup (Day 40-100)",
+      "order": 5
+    },
+    {
+      "id": "phase6",
+      "name": "Governance & Compliance (Day 0-100)",
+      "order": 6
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Open SPV Bank Accounts",
+      "phase": "phase1",
+      "startDay": 1,
+      "duration": 5,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [],
+      "criticality": "critical"
+    },
+    {
+      "id": "t2",
+      "name": "Complete KYC/AML",
+      "phase": "phase1",
+      "startDay": 2,
+      "duration": 11,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t1"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t3",
+      "name": "Establish Treasury Controls",
+      "phase": "phase1",
+      "startDay": 4,
+      "duration": 9,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t1"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t4",
+      "name": "Adopt Treasury Policy",
+      "phase": "phase1",
+      "startDay": 10,
+      "duration": 4,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t2",
+        "t3"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t5",
+      "name": "Approve Delegated Authorities Matrix",
+      "phase": "phase1",
+      "startDay": 10,
+      "duration": 5,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t2",
+        "t3"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t6",
+      "name": "Board Resolution: Treasury Policy",
+      "phase": "phase1",
+      "startDay": 14,
+      "duration": 3,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t4",
+        "t5"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t7",
+      "name": "Board Resolution: Intercompany Loan Agreements",
+      "phase": "phase1",
+      "startDay": 16,
+      "duration": 4,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t6"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t8",
+      "name": "Capital Entry Readiness Confirmed",
+      "phase": "phase1",
+      "startDay": 18,
+      "duration": 3,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t2",
+        "t3",
+        "t6",
+        "t7"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t9",
+      "name": "Execute Loan A (SPV to US HoldCo)",
+      "phase": "phase2",
+      "startDay": 15,
+      "duration": 7,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t7"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t10",
+      "name": "Execute Loan B (US HoldCo to US OpCo)",
+      "phase": "phase2",
+      "startDay": 17,
+      "duration": 8,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t7"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t11",
+      "name": "Execute Loan C (SPV to UK OpCo)",
+      "phase": "phase2",
+      "startDay": 19,
+      "duration": 8,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t7"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t12",
+      "name": "Create Intercompany Loan Register",
+      "phase": "phase2",
+      "startDay": 24,
+      "duration": 6,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t9",
+        "t10",
+        "t11"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t13",
+      "name": "Activate Drawdown Templates",
+      "phase": "phase2",
+      "startDay": 28,
+      "duration": 4,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t12"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t14",
+      "name": "Activate Compliance Certificates",
+      "phase": "phase2",
+      "startDay": 29,
+      "duration": 6,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t12"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t15",
+      "name": "Loan A Drawdown to US HoldCo",
+      "phase": "phase3",
+      "startDay": 30,
+      "duration": 5,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t9",
+        "t13"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t16",
+      "name": "Escrow Funded",
+      "phase": "phase3",
+      "startDay": 33,
+      "duration": 5,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t15"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t17",
+      "name": "PMI Scheduled",
+      "phase": "phase3",
+      "startDay": 35,
+      "duration": 4,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t16"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t18",
+      "name": "Depot-Level PMI and Acceptance",
+      "phase": "phase3",
+      "startDay": 39,
+      "duration": 14,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t17"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t19",
+      "name": "FAA Conformity",
+      "phase": "phase3",
+      "startDay": 50,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t18"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t20",
+      "name": "N-Reg Documentation",
+      "phase": "phase3",
+      "startDay": 52,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t18"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t21",
+      "name": "Insurance Binding (SPV as Loss Payee)",
+      "phase": "phase3",
+      "startDay": 54,
+      "duration": 8,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t18"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t22",
+      "name": "Demonstrator Airworthy and EU-Ready",
+      "phase": "phase3",
+      "startDay": 62,
+      "duration": 9,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t19",
+        "t20",
+        "t21"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t23",
+      "name": "Loan B Drawdowns",
+      "phase": "phase4",
+      "startDay": 35,
+      "duration": 8,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t10",
+        "t13"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t24",
+      "name": "Pre-Buy Inspections",
+      "phase": "phase4",
+      "startDay": 42,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t23"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t25",
+      "name": "Long-Lead Procurement",
+      "phase": "phase4",
+      "startDay": 48,
+      "duration": 18,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t24"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t26",
+      "name": "MRO and Depot-Level Work",
+      "phase": "phase4",
+      "startDay": 54,
+      "duration": 24,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t24"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t27",
+      "name": "Integration Baseline Creation",
+      "phase": "phase4",
+      "startDay": 70,
+      "duration": 12,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t25",
+        "t26"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t28",
+      "name": "Engineering Documentation",
+      "phase": "phase4",
+      "startDay": 76,
+      "duration": 16,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t27"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t29",
+      "name": "Component Tracking Activation",
+      "phase": "phase4",
+      "startDay": 86,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t28"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t30",
+      "name": "Export Control Screening",
+      "phase": "phase4",
+      "startDay": 88,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t28"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t31",
+      "name": "Procurement Logs and Engineering Change Control",
+      "phase": "phase4",
+      "startDay": 90,
+      "duration": 11,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t28"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t32",
+      "name": "Loan C Drawdown",
+      "phase": "phase5",
+      "startDay": 40,
+      "duration": 7,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t11",
+        "t13"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t33",
+      "name": "Poland Base Setup",
+      "phase": "phase5",
+      "startDay": 47,
+      "duration": 15,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t32"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t34",
+      "name": "Crew Training",
+      "phase": "phase5",
+      "startDay": 56,
+      "duration": 14,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t22",
+        "t33"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t35",
+      "name": "SMS Activation (UK OpCo)",
+      "phase": "phase5",
+      "startDay": 60,
+      "duration": 12,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t33"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t36",
+      "name": "Ops Manual (N-Reg) Adoption",
+      "phase": "phase5",
+      "startDay": 68,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t34",
+        "t35"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t37",
+      "name": "CAA and EASA Part NCC Declarations",
+      "phase": "phase5",
+      "startDay": 76,
+      "duration": 12,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t36"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t38",
+      "name": "EU Demo Schedule Finalization",
+      "phase": "phase5",
+      "startDay": 88,
+      "duration": 7,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t22",
+        "t37"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t39",
+      "name": "Operational Readiness Logs (Flight, Maintenance, MOR, Safety)",
+      "phase": "phase5",
+      "startDay": 90,
+      "duration": 10,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t37"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t40",
+      "name": "Customer Demo Procedures",
+      "phase": "phase5",
+      "startDay": 93,
+      "duration": 8,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t38",
+        "t39"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t41",
+      "name": "SMS Governance Framework Activation",
+      "phase": "phase6",
+      "startDay": 1,
+      "duration": 30,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [],
+      "criticality": "critical"
+    },
+    {
+      "id": "t42",
+      "name": "MOR and Safety Reporting Setup",
+      "phase": "phase6",
+      "startDay": 10,
+      "duration": 35,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t41"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t43",
+      "name": "Procurement and Engineering Compliance Framework",
+      "phase": "phase6",
+      "startDay": 20,
+      "duration": 45,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t41"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t44",
+      "name": "MEL Adoption",
+      "phase": "phase6",
+      "startDay": 35,
+      "duration": 25,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t41"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t45",
+      "name": "ERP Activation",
+      "phase": "phase6",
+      "startDay": 40,
+      "duration": 35,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t41"
+      ],
+      "criticality": "critical"
+    },
+    {
+      "id": "t46",
+      "name": "Monthly Treasury Reporting Cadence",
+      "phase": "phase6",
+      "startDay": 18,
+      "duration": 83,
+      "status": "Not Started",
+      "percentComplete": 0,
+      "predecessors": [
+        "t8"
+      ],
+      "criticality": "critical"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "m1",
+      "name": "Gate 1: SPV Activated",
+      "day": 20,
+      "taskId": "t8"
+    },
+    {
+      "id": "m2",
+      "name": "Gate 2: Loan Architecture Live",
+      "day": 35,
+      "taskId": "t14"
+    },
+    {
+      "id": "m3",
+      "name": "Gate 3: Demonstrator EU-Ready",
+      "day": 70,
+      "taskId": "t22"
+    },
+    {
+      "id": "m4",
+      "name": "Gate 4: BEST Baseline Locked",
+      "day": 82,
+      "taskId": "t27"
+    },
+    {
+      "id": "m5",
+      "name": "Gate 5: UK OpCo Ops Ready",
+      "day": 95,
+      "taskId": "t40"
+    },
+    {
+      "id": "m6",
+      "name": "Gate 6: 100-Day Closeout",
+      "day": 100,
+      "taskId": "t46"
+    }
+  ]
+}
