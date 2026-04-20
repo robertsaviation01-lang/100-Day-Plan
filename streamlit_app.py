@@ -1065,7 +1065,8 @@ if section == "Group Formation Progress":
             )
             st.dataframe(df, use_container_width=True, hide_index=True)
 
-            phase_folders = dataroom.PHASE_DATAROOM_FOLDERS.get(phase["id"], [])
+            phase_folder_map = getattr(dataroom, "PHASE_DATAROOM_FOLDERS", {}) or {}
+            phase_folders = phase_folder_map.get(phase["id"], [])
             if phase_folders:
                 render_dataroom_resources(
                     phase_folders,
