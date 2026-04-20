@@ -1065,6 +1065,16 @@ if section == "Group Formation Progress":
             )
             st.dataframe(df, use_container_width=True, hide_index=True)
 
+            phase_folders = dataroom.PHASE_DATAROOM_FOLDERS.get(phase["id"], [])
+            if phase_folders:
+                render_dataroom_resources(
+                    phase_folders,
+                    section_key=f"phase_{phase['id']}",
+                    phase_id=phase["id"],
+                    tasks=tasks,
+                    key_prefix=f"phase_{phase['id']}",
+                )
+
 elif section == "Phase Tracker":
     st.header("📌 Section II: Phase Progress Tracker")
 
