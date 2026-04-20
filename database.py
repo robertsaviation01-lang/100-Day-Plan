@@ -28,6 +28,7 @@ def init_db():
             status TEXT DEFAULT 'Not Started',
             percent_complete INTEGER DEFAULT 0,
             owner TEXT,
+            notes TEXT DEFAULT '',
             predecessors TEXT,
             criticality TEXT DEFAULT 'normal',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -100,6 +101,8 @@ def init_db():
     task_columns = {row[1] for row in c.fetchall()}
     if "owner" not in task_columns:
         c.execute("ALTER TABLE tasks ADD COLUMN owner TEXT")
+    if "notes" not in task_columns:
+        c.execute("ALTER TABLE tasks ADD COLUMN notes TEXT DEFAULT ''")
 
     c.execute("PRAGMA table_info(allowed_users)")
     allowed_user_columns = {row[1] for row in c.fetchall()}
@@ -146,8 +149,8 @@ def load_initial_data_from_json():
     for task in data.get("tasks", []):
         c.execute("""
             INSERT OR IGNORE INTO tasks 
-            (id, name, phase, start_day, duration, status, percent_complete, owner, predecessors, criticality)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, name, phase, start_day, duration, status, percent_complete, owner, notes, predecessors, criticality)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             task["id"],
             task["name"],
@@ -157,6 +160,7 @@ def load_initial_data_from_json():
             task.get("status", "Not Started"),
             task.get("percentComplete", 0),
             task.get("owner", ""),
+            task.get("notes", ""),
             json.dumps(task.get("predecessors", [])),
             task.get("criticality", "normal")
         ))
@@ -188,7 +192,7 @@ def get_all_tasks() -> List[Dict[str, Any]]:
     c = conn.cursor()
     c.execute("""
         SELECT id, name, phase, start_day, duration, status, percent_complete, owner,
-               predecessors, criticality, created_at, updated_at
+             notes, predecessors, criticality, created_at, updated_at
         FROM tasks
         ORDER BY start_day
     """)
@@ -220,9 +224,9 @@ def update_task(task_id: str, status: str, percent_complete: int, notes: str, us
     # Update task
     c.execute("""
         UPDATE tasks 
-        SET status = ?, percent_complete = ?, updated_at = CURRENT_TIMESTAMP
+        SET status = ?, percent_complete = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-    """, (status, percent_complete, task_id))
+    """, (status, percent_complete, notes or "", task_id))
     
     # Log update
     c.execute("""
@@ -284,10 +288,10 @@ def update_tasks_bulk(task_ids: List[str], status: str, percent_complete: int, n
         c.execute(
             """
             UPDATE tasks
-            SET status = ?, percent_complete = ?, owner = ?, updated_at = CURRENT_TIMESTAMP
+            SET status = ?, percent_complete = ?, owner = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
-            (status, percent_complete, owner, task_id),
+            (status, percent_complete, owner, notes or "", task_id),
         )
         c.execute(
             """

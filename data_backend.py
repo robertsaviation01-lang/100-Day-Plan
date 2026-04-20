@@ -194,7 +194,7 @@ class GoogleSheetsBackend:
             "tasks",
             [
                 "id", "name", "phase", "start_day", "duration", "status", "percent_complete", "owner",
-                "predecessors", "criticality", "created_at", "updated_at"
+                "notes", "predecessors", "criticality", "created_at", "updated_at"
             ],
         )
         self._get_or_create_sheet("milestones", ["day", "name", "task_id"])
@@ -247,6 +247,7 @@ class GoogleSheetsBackend:
                 task.get("status", "Not Started"),
                 task.get("percentComplete", 0),
                 task.get("owner", ""),
+                task.get("notes", ""),
                 json.dumps(task.get("predecessors", [])),
                 task.get("criticality", "normal"),
                 now,
@@ -306,6 +307,7 @@ class GoogleSheetsBackend:
                     "status": row.get("status", "Not Started"),
                     "percentComplete": _to_int(row.get("percent_complete", 0)),
                     "owner": row.get("owner", ""),
+                    "notes": row.get("notes", ""),
                     "predecessors": predecessors,
                     "criticality": row.get("criticality", "normal"),
                     "created_at": row.get("created_at", ""),
@@ -333,19 +335,21 @@ class GoogleSheetsBackend:
 
     def update_task(self, task_id: str, status: str, percent_complete: int, notes: str, user_name: str = "Unknown") -> None:
         tasks_ws = self._worksheet("tasks")
+        header = self._ensure_sheet_columns("tasks", ["notes", "updated_at", "status", "percent_complete"])
         ids = self._retry_google_call(tasks_ws.col_values, 1)
         if task_id not in ids:
             raise ValueError(f"Task ID not found: {task_id}")
 
         row_idx = ids.index(task_id) + 1
-        header = self._retry_google_call(tasks_ws.row_values, 1)
         status_col = header.index("status") + 1
         percent_col = header.index("percent_complete") + 1
+        notes_col = header.index("notes") + 1
         updated_col = header.index("updated_at") + 1
         now = _now_iso()
 
         self._retry_google_call(tasks_ws.update_cell, row_idx, status_col, status)
         self._retry_google_call(tasks_ws.update_cell, row_idx, percent_col, percent_complete)
+        self._retry_google_call(tasks_ws.update_cell, row_idx, notes_col, notes or "")
         self._retry_google_call(tasks_ws.update_cell, row_idx, updated_col, now)
 
         self._retry_google_call(self._worksheet("task_updates").append_row,
@@ -382,13 +386,14 @@ class GoogleSheetsBackend:
             return
 
         tasks_ws = self._worksheet("tasks")
-        header = self._ensure_sheet_columns("tasks", ["owner", "updated_at", "status", "percent_complete"])
+        header = self._ensure_sheet_columns("tasks", ["owner", "notes", "updated_at", "status", "percent_complete"])
         ids = self._retry_google_call(tasks_ws.col_values, 1)
         now = _now_iso()
 
         status_col = header.index("status") + 1
         percent_col = header.index("percent_complete") + 1
         owner_col = header.index("owner") + 1
+        notes_col = header.index("notes") + 1
         updated_col = header.index("updated_at") + 1
 
         data_updates = []
@@ -405,6 +410,7 @@ class GoogleSheetsBackend:
                     {"range": f"{_column_letter(status_col)}{row_idx}", "values": [[status]]},
                     {"range": f"{_column_letter(percent_col)}{row_idx}", "values": [[percent_complete]]},
                     {"range": f"{_column_letter(owner_col)}{row_idx}", "values": [[owner]]},
+                    {"range": f"{_column_letter(notes_col)}{row_idx}", "values": [[notes or ""]]},
                     {"range": f"{_column_letter(updated_col)}{row_idx}", "values": [[now]]},
                 ]
             )

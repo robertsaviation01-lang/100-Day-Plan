@@ -803,8 +803,18 @@ elif section == "Task Updates":
         owner_value = next((t.get("owner", "") for t in phase_tasks if t.get("owner")), "")
         if phase_tasks and any((t.get("owner", "") != owner_value) for t in phase_tasks):
             owner_value = ""
+        notes_values = [str(t.get("notes", "") or "") for t in phase_tasks]
+        non_empty_notes = [n for n in notes_values if n.strip()]
+        if not non_empty_notes:
+            default_notes = ""
+        elif all(n == non_empty_notes[0] for n in non_empty_notes):
+            default_notes = non_empty_notes[0]
+        else:
+            default_notes = non_empty_notes[0]
+            st.caption("Tasks in this workstream currently have mixed notes; showing the first non-empty value.")
     else:
         owner_value = task.get("owner", "")
+        default_notes = str(task.get("notes", "") or "")
 
     owner_values = [item[0] for item in owner_choices]
     owner_index = owner_values.index(owner_value) if owner_value in owner_values else 0
@@ -853,7 +863,13 @@ elif section == "Task Updates":
             ]
             st.dataframe(pd.DataFrame(deliverable_rows), use_container_width=True, hide_index=True)
 
-    notes = st.text_area("Progress Notes:", placeholder="Add progress updates, blockers, or next steps...")
+    notes_key = f"progress_notes_{selected_workstream['id']}" if is_workstream and selected_workstream else f"progress_notes_{task['id']}"
+    notes = st.text_area(
+        "Progress Notes:",
+        value=default_notes,
+        key=notes_key,
+        placeholder="Add progress updates, blockers, or next steps...",
+    )
 
     if st.button("💾 Save Task Update", type="primary"):
         try:
