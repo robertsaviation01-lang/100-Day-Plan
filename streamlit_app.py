@@ -39,6 +39,23 @@ def _fetch_dataroom_files(folder_id: str) -> list:
         return []
 
 
+def _upload_dataroom_file(folder_id: str, file_name: str, file_bytes: bytes, mime_type: str) -> bool:
+    svc = _get_drive_service()
+    if svc is None:
+        return False
+    try:
+        uploaded = dataroom.upload_file_to_folder(
+            svc,
+            folder_id=folder_id,
+            file_name=file_name,
+            file_bytes=file_bytes,
+            mime_type=mime_type or "application/octet-stream",
+        )
+        return bool(uploaded and uploaded.get("id"))
+    except Exception:
+        return False
+
+
 def render_dataroom_resources(
     label_folders: list,
     section_key: str,
@@ -76,6 +93,39 @@ def render_dataroom_resources(
         if not can_edit:
             st.caption("Login with admin/editor access to manage manual attachments.")
             return
+
+        st.markdown("**Upload to Google Drive**")
+        folder_options = {label: folder_id for label, folder_id in label_folders}
+        selected_folder_label = st.selectbox(
+            "Upload target folder",
+            options=list(folder_options.keys()),
+            key=f"upload_target_{key_prefix or section_key}",
+        )
+        upload_file = st.file_uploader(
+            "Choose a file",
+            key=f"upload_file_{key_prefix or section_key}",
+        )
+        if st.button("Upload File", key=f"upload_btn_{key_prefix or section_key}"):
+            if not upload_file:
+                st.warning("Please choose a file to upload.")
+            else:
+                target_folder_id = folder_options[selected_folder_label]
+                file_bytes = upload_file.getvalue()
+                mime_type = upload_file.type or "application/octet-stream"
+                saved = _upload_dataroom_file(
+                    target_folder_id,
+                    upload_file.name,
+                    file_bytes,
+                    mime_type,
+                )
+                if saved:
+                    st.success("File uploaded to dataroom.")
+                    st.cache_data.clear()
+                    st.rerun()
+                else:
+                    st.warning("Could not upload file. Check Drive permissions for the service account.")
+
+        st.divider()
 
         add_form_key = f"add_manual_attachment_{key_prefix or section_key}"
         with st.form(add_form_key, clear_on_submit=True):

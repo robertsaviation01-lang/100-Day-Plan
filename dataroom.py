@@ -74,3 +74,30 @@ def list_folder_files(drive_service: Any, folder_id: str) -> list[dict]:
         orderBy="name",
     ).execute()
     return result.get("files", [])
+
+
+def upload_file_to_folder(
+    drive_service: Any,
+    folder_id: str,
+    file_name: str,
+    file_bytes: bytes,
+    mime_type: str = "application/octet-stream",
+) -> dict:
+    """Upload a file to a Drive folder and return key file metadata."""
+    from io import BytesIO
+
+    from googleapiclient.http import MediaIoBaseUpload
+
+    media = MediaIoBaseUpload(BytesIO(file_bytes), mimetype=mime_type, resumable=False)
+    metadata = {"name": file_name, "parents": [folder_id]}
+    created = (
+        drive_service.files()
+        .create(
+            body=metadata,
+            media_body=media,
+            fields="id,name,mimeType,webViewLink",
+            supportsAllDrives=False,
+        )
+        .execute()
+    )
+    return created or {}
