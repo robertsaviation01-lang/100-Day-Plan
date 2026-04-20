@@ -10,12 +10,48 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import data_backend as db
+import dataroom
 
 st.set_page_config(page_title="100-Day Plan - Team Dashboard", layout="wide")
 
 # Initialize backend (Google Sheets if configured, else SQLite)
 db.init_db()
 db.load_initial_data_from_json()
+
+# ── Dataroom: cached Drive API helpers ──────────────────────────────────────
+@st.cache_resource(show_spinner=False)
+def _get_drive_service():
+    try:
+        sa_info = dict(st.secrets["gcp_service_account"])
+        return dataroom.get_drive_service(sa_info)
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _fetch_dataroom_files(folder_id: str) -> list:
+    svc = _get_drive_service()
+    if svc is None:
+        return []
+    try:
+        return dataroom.list_folder_files(svc, folder_id)
+    except Exception:
+        return []
+
+
+def render_dataroom_resources(label_folders: list, key_prefix: str = "") -> None:
+    """Render a collapsible Dataroom Resources expander for the given folder list."""
+    with st.expander("📁 Dataroom Resources", expanded=False):
+        any_files = False
+        for label, folder_id in label_folders:
+            files = _fetch_dataroom_files(folder_id)
+            if files:
+                any_files = True
+                st.markdown(f"**{label}**")
+                for f in files:
+                    st.markdown(f"- [{f['name']}]({f['webViewLink']})")
+        if not any_files:
+            st.caption("No dataroom files found. Ensure the Drive API is enabled and the folder is shared with the service account.")
 
 GROUP_FORMATION_WORKSTREAMS = [
     {"id": "ws1", "name": "WS1 Ownership & Governance Setup", "phase_id": "phase1"},
@@ -697,6 +733,7 @@ if section == "Group Formation Progress":
         st.progress(gf_avg / 100, text=f"{gf_avg:.0f}% Complete")
         gf_df = pd.DataFrame([{k: v for k, v in row.items() if k != "phase_id"} for row in gf_rows])
         st.dataframe(gf_df, use_container_width=True, hide_index=True)
+    render_dataroom_resources(dataroom.EXECUTION_PLAN_FOLDERS, key_prefix="exec_plan")
 
     st.markdown("### Deliverable Tracking (Board-ready Group Formation Plan, Chap 4)")
     for ws in GROUP_FORMATION_WORKSTREAMS:
@@ -739,6 +776,11 @@ if section == "Group Formation Progress":
                         st.rerun()
                     else:
                         st.warning("Could not save deliverables because no phase tasks were found.")
+
+            ws_folders = dataroom.WORKSTREAM_DATAROOM_FOLDERS.get(ws["id"])
+            if ws_folders:
+                st.divider()
+                render_dataroom_resources(ws_folders, key_prefix=ws["id"])
 
     # Then show the original execution plan phases
     for phase in phases_list:
