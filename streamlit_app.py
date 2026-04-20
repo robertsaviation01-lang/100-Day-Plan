@@ -981,13 +981,15 @@ if section == "Group Formation Progress":
         st.progress(gf_avg / 100, text=f"{gf_avg:.0f}% Complete")
         gf_df = pd.DataFrame([{k: v for k, v in row.items() if k != "phase_id"} for row in gf_rows])
         st.dataframe(gf_df, use_container_width=True, hide_index=True)
-        render_dataroom_resources(
-            dataroom.EXECUTION_PLAN_FOLDERS,
-            section_key="execution_plan",
-            phase_id="phase1",
-            tasks=tasks,
-            key_prefix="exec_plan",
-        )
+        exec_plan_folders = getattr(dataroom, "EXECUTION_PLAN_FOLDERS", []) or []
+        if exec_plan_folders:
+            render_dataroom_resources(
+                exec_plan_folders,
+                section_key="execution_plan",
+                phase_id="phase1",
+                tasks=tasks,
+                key_prefix="exec_plan",
+            )
 
     st.markdown("### Deliverable Tracking (Board-ready Group Formation Plan, Chap 4)")
     for ws in GROUP_FORMATION_WORKSTREAMS:
@@ -1031,7 +1033,8 @@ if section == "Group Formation Progress":
                     else:
                         st.warning("Could not save deliverables because no phase tasks were found.")
 
-            ws_folders = dataroom.WORKSTREAM_DATAROOM_FOLDERS.get(ws["id"])
+            ws_folder_map = getattr(dataroom, "WORKSTREAM_DATAROOM_FOLDERS", {}) or {}
+            ws_folders = ws_folder_map.get(ws["id"])
             if ws_folders:
                 st.divider()
                 render_dataroom_resources(
