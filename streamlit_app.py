@@ -39,8 +39,14 @@ def _fetch_dataroom_files(folder_id: str) -> list:
         return []
 
 
-def render_dataroom_resources(label_folders: list, key_prefix: str = "") -> None:
-    """Render a collapsible Dataroom Resources expander for the given folder list."""
+def render_dataroom_resources(
+    label_folders: list,
+    section_key: str,
+    phase_id: str,
+    tasks: list,
+    key_prefix: str = "",
+) -> None:
+    """Render dataroom links and section-scoped manual attachments."""
     with st.expander("📁 Dataroom Resources", expanded=False):
         any_files = False
         for label, folder_id in label_folders:
@@ -50,8 +56,68 @@ def render_dataroom_resources(label_folders: list, key_prefix: str = "") -> None
                 st.markdown(f"**{label}**")
                 for f in files:
                     st.markdown(f"- [{f['name']}]({f['webViewLink']})")
-        if not any_files:
+
+        manual_attachments = load_section_attachments(section_key, phase_id, tasks)
+        if manual_attachments:
+            st.markdown("**Manual Attachments**")
+            for i, item in enumerate(manual_attachments):
+                title = (item.get("name") or "Untitled Link").strip()
+                url = (item.get("url") or "").strip()
+                if url:
+                    st.markdown(f"- [{title}]({url})")
+
+        if not any_files and not manual_attachments:
             st.caption("No dataroom files found. Ensure the Drive API is enabled and the folder is shared with the service account.")
+
+        can_edit = bool(st.session_state.user_name) and st.session_state.user_role in {"admin", "editor"}
+        st.divider()
+        st.caption("Attach a manual link when this section has no auto-synced Drive files, or to add additional references.")
+
+        if not can_edit:
+            st.caption("Login with admin/editor access to manage manual attachments.")
+            return
+
+        add_form_key = f"add_manual_attachment_{key_prefix or section_key}"
+        with st.form(add_form_key, clear_on_submit=True):
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                link_name = st.text_input("Link name", key=f"link_name_{key_prefix or section_key}")
+            with c2:
+                link_url = st.text_input("Link URL", placeholder="https://...", key=f"link_url_{key_prefix or section_key}")
+            add_clicked = st.form_submit_button("Attach Link")
+
+        if add_clicked:
+            link_name = (link_name or "").strip()
+            link_url = (link_url or "").strip()
+            if not link_name or not link_url:
+                st.warning("Please provide both link name and URL.")
+            elif not re.match(r"^https?://", link_url, flags=re.IGNORECASE):
+                st.warning("Please enter a valid URL starting with http:// or https://")
+            else:
+                manual_attachments.append({"name": link_name, "url": link_url})
+                if save_section_attachments(section_key, phase_id, tasks, manual_attachments, st.session_state.user_name):
+                    st.success("Attachment saved.")
+                    st.cache_data.clear()
+                    st.rerun()
+                else:
+                    st.warning("Could not save attachment because no phase tasks were found.")
+
+        if manual_attachments:
+            options = list(range(len(manual_attachments)))
+            remove_idx = st.selectbox(
+                "Remove attachment",
+                options,
+                format_func=lambda idx: manual_attachments[idx].get("name") or f"Attachment {idx + 1}",
+                key=f"remove_select_{key_prefix or section_key}",
+            )
+            if st.button("Remove Selected Attachment", key=f"remove_manual_attachment_{key_prefix or section_key}"):
+                kept = [item for i, item in enumerate(manual_attachments) if i != remove_idx]
+                if save_section_attachments(section_key, phase_id, tasks, kept, st.session_state.user_name):
+                    st.success("Attachment removed.")
+                    st.cache_data.clear()
+                    st.rerun()
+                else:
+                    st.warning("Could not remove attachment because no phase tasks were found.")
 
 GROUP_FORMATION_WORKSTREAMS = [
     {"id": "ws1", "name": "WS1 Ownership & Governance Setup", "phase_id": "phase1"},
@@ -217,6 +283,85 @@ def save_workstream_note(ws_id, phase_id, tasks, note_text, user_name):
         ws_note_block = f"[ws_note:{ws_id}]" + (note_text or "").strip() + "[/ws_note]"
 
     new_notes = "\n".join([part for part in [existing_notes, ws_note_block] if part]).strip()
+
+    db.update_task(
+        anchor["id"],
+        status=anchor["status"],
+        percent_complete=anchor.get("percentComplete", 0),
+        notes=new_notes,
+        user_name=user_name or "System",
+    )
+    return True
+
+
+def _section_attachments_from_notes(section_key, notes_text):
+    if not notes_text:
+        return []
+    pattern = rf"\[dataroom_manual:{re.escape(section_key)}\](.*?)\[/dataroom_manual\]"
+    match = re.search(pattern, notes_text, flags=re.DOTALL)
+    if not match:
+        return []
+    try:
+        data = json.loads((match.group(1) or "").strip())
+    except Exception:
+        return []
+    if not isinstance(data, list):
+        return []
+
+    cleaned = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "")).strip()
+        url = str(item.get("url", "")).strip()
+        if name and url:
+            cleaned.append({"name": name, "url": url})
+    return cleaned
+
+
+def load_section_attachments(section_key, phase_id, tasks):
+    phase_tasks = sorted(
+        [t for t in tasks if t.get("phase") == phase_id],
+        key=lambda t: (t.get("startDay", 9999), t.get("name", "")),
+    )
+    for task in phase_tasks:
+        attachments = _section_attachments_from_notes(section_key, task.get("notes", ""))
+        if attachments:
+            return attachments
+    return []
+
+
+def save_section_attachments(section_key, phase_id, tasks, attachments, user_name):
+    phase_tasks = sorted(
+        [t for t in tasks if t.get("phase") == phase_id],
+        key=lambda t: (t.get("startDay", 9999), t.get("name", "")),
+    )
+    if not phase_tasks:
+        return False
+
+    anchor = phase_tasks[0]
+    existing_notes = anchor.get("notes", "") or ""
+    existing_notes = re.sub(
+        rf"\[dataroom_manual:{re.escape(section_key)}\].*?\[/dataroom_manual\]",
+        "",
+        existing_notes,
+        flags=re.DOTALL,
+    ).strip()
+
+    cleaned = []
+    for item in attachments or []:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "")).strip()
+        url = str(item.get("url", "")).strip()
+        if name and url:
+            cleaned.append({"name": name, "url": url})
+
+    block = ""
+    if cleaned:
+        block = f"[dataroom_manual:{section_key}]" + json.dumps(cleaned) + "[/dataroom_manual]"
+
+    new_notes = "\n".join([part for part in [existing_notes, block] if part]).strip()
 
     db.update_task(
         anchor["id"],
@@ -733,7 +878,13 @@ if section == "Group Formation Progress":
         st.progress(gf_avg / 100, text=f"{gf_avg:.0f}% Complete")
         gf_df = pd.DataFrame([{k: v for k, v in row.items() if k != "phase_id"} for row in gf_rows])
         st.dataframe(gf_df, use_container_width=True, hide_index=True)
-    render_dataroom_resources(dataroom.EXECUTION_PLAN_FOLDERS, key_prefix="exec_plan")
+        render_dataroom_resources(
+            dataroom.EXECUTION_PLAN_FOLDERS,
+            section_key="execution_plan",
+            phase_id="phase1",
+            tasks=tasks,
+            key_prefix="exec_plan",
+        )
 
     st.markdown("### Deliverable Tracking (Board-ready Group Formation Plan, Chap 4)")
     for ws in GROUP_FORMATION_WORKSTREAMS:
@@ -780,7 +931,13 @@ if section == "Group Formation Progress":
             ws_folders = dataroom.WORKSTREAM_DATAROOM_FOLDERS.get(ws["id"])
             if ws_folders:
                 st.divider()
-                render_dataroom_resources(ws_folders, key_prefix=ws["id"])
+                render_dataroom_resources(
+                    ws_folders,
+                    section_key=ws["id"],
+                    phase_id=ws["phase_id"],
+                    tasks=tasks,
+                    key_prefix=ws["id"],
+                )
 
     # Then show the original execution plan phases
     for phase in phases_list:
