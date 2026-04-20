@@ -56,6 +56,42 @@ def _upload_dataroom_file(folder_id: str, file_name: str, file_bytes: bytes, mim
         return False
 
 
+ALLOWED_UPLOAD_EXTENSIONS = {
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "csv",
+    "ppt",
+    "pptx",
+    "txt",
+    "zip",
+    "png",
+    "jpg",
+    "jpeg",
+}
+MAX_UPLOAD_SIZE_MB = 50
+
+
+def _validate_upload_file(upload_file):
+    if not upload_file:
+        return False, "Please choose a file to upload."
+
+    file_name = upload_file.name or ""
+    ext = Path(file_name).suffix.lower().lstrip(".")
+    if not ext or ext not in ALLOWED_UPLOAD_EXTENSIONS:
+        allowed = ", ".join(sorted(ALLOWED_UPLOAD_EXTENSIONS))
+        return False, f"Unsupported file type. Allowed: {allowed}"
+
+    file_bytes = upload_file.getvalue()
+    max_bytes = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    if len(file_bytes) > max_bytes:
+        return False, f"File is too large. Maximum size is {MAX_UPLOAD_SIZE_MB} MB."
+
+    return True, ""
+
+
 def render_dataroom_resources(
     label_folders: list,
     section_key: str,
@@ -95,6 +131,7 @@ def render_dataroom_resources(
             return
 
         st.markdown("**Upload to Google Drive**")
+        st.caption(f"Allowed types: {', '.join(sorted(ALLOWED_UPLOAD_EXTENSIONS))} | Max size: {MAX_UPLOAD_SIZE_MB} MB")
         folder_options = {label: folder_id for label, folder_id in label_folders}
         selected_folder_label = st.selectbox(
             "Upload target folder",
@@ -103,26 +140,42 @@ def render_dataroom_resources(
         )
         upload_file = st.file_uploader(
             "Choose a file",
+            type=sorted(ALLOWED_UPLOAD_EXTENSIONS),
             key=f"upload_file_{key_prefix or section_key}",
         )
         if st.button("Upload File", key=f"upload_btn_{key_prefix or section_key}"):
-            if not upload_file:
-                st.warning("Please choose a file to upload.")
+            valid, message = _validate_upload_file(upload_file)
+            if not valid:
+                st.warning(message)
             else:
                 target_folder_id = folder_options[selected_folder_label]
                 file_bytes = upload_file.getvalue()
                 mime_type = upload_file.type or "application/octet-stream"
-                saved = _upload_dataroom_file(
-                    target_folder_id,
-                    upload_file.name,
-                    file_bytes,
-                    mime_type,
-                )
+
+                progress = st.progress(0, text="Preparing upload...")
+                progress.progress(25, text="Valid file. Starting upload to Google Drive...")
+
+                with st.status("Uploading file", expanded=False) as status:
+                    status.write(f"Uploading {upload_file.name}")
+                    saved = _upload_dataroom_file(
+                        target_folder_id,
+                        upload_file.name,
+                        file_bytes,
+                        mime_type,
+                    )
+                    if saved:
+                        progress.progress(85, text="Upload complete. Refreshing section...")
+                        status.update(label="Upload complete", state="complete")
+                    else:
+                        status.update(label="Upload failed", state="error")
+
                 if saved:
+                    progress.progress(100, text="Done")
                     st.success("File uploaded to dataroom.")
                     st.cache_data.clear()
                     st.rerun()
                 else:
+                    progress.empty()
                     st.warning("Could not upload file. Check Drive permissions for the service account.")
 
         st.divider()
