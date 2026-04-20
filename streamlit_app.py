@@ -137,6 +137,61 @@ def save_workstream_deliverable_state(ws_id, phase_id, tasks, state, user_name):
     return True
 
 
+def _workstream_note_from_notes(ws_id, notes_text):
+    if not notes_text:
+        return ""
+    pattern = rf"\[ws_note:{ws_id}\](.*?)\[/ws_note\]"
+    match = re.search(pattern, notes_text, flags=re.DOTALL)
+    if not match:
+        return ""
+    return (match.group(1) or "").strip()
+
+
+def load_workstream_note(ws_id, phase_id, tasks):
+    phase_tasks = sorted(
+        [t for t in tasks if t.get("phase") == phase_id],
+        key=lambda t: (t.get("startDay", 9999), t.get("name", "")),
+    )
+    for task in phase_tasks:
+        note = _workstream_note_from_notes(ws_id, task.get("notes", ""))
+        if note:
+            return note
+    return ""
+
+
+def save_workstream_note(ws_id, phase_id, tasks, note_text, user_name):
+    phase_tasks = sorted(
+        [t for t in tasks if t.get("phase") == phase_id],
+        key=lambda t: (t.get("startDay", 9999), t.get("name", "")),
+    )
+    if not phase_tasks:
+        return False
+
+    anchor = phase_tasks[0]
+    existing_notes = anchor.get("notes", "") or ""
+    existing_notes = re.sub(
+        rf"\[ws_note:{ws_id}\].*?\[/ws_note\]",
+        "",
+        existing_notes,
+        flags=re.DOTALL,
+    ).strip()
+
+    ws_note_block = ""
+    if (note_text or "").strip():
+        ws_note_block = f"[ws_note:{ws_id}]" + (note_text or "").strip() + "[/ws_note]"
+
+    new_notes = "\n".join([part for part in [existing_notes, ws_note_block] if part]).strip()
+
+    db.update_task(
+        anchor["id"],
+        status=anchor["status"],
+        percent_complete=anchor.get("percentComplete", 0),
+        notes=new_notes,
+        user_name=user_name or "System",
+    )
+    return True
+
+
 def compute_critical_summary(tasks, milestones):
     critical_tasks = sorted(
         [t for t in tasks if t.get("criticality") == "critical"],
@@ -803,15 +858,7 @@ elif section == "Task Updates":
         owner_value = next((t.get("owner", "") for t in phase_tasks if t.get("owner")), "")
         if phase_tasks and any((t.get("owner", "") != owner_value) for t in phase_tasks):
             owner_value = ""
-        notes_values = [str(t.get("notes", "") or "") for t in phase_tasks]
-        non_empty_notes = [n for n in notes_values if n.strip()]
-        if not non_empty_notes:
-            default_notes = ""
-        elif all(n == non_empty_notes[0] for n in non_empty_notes):
-            default_notes = non_empty_notes[0]
-        else:
-            default_notes = non_empty_notes[0]
-            st.caption("Tasks in this workstream currently have mixed notes; showing the first non-empty value.")
+        default_notes = load_workstream_note(selected_workstream["id"], selected_workstream["phase_id"], tasks)
     else:
         owner_value = task.get("owner", "")
         default_notes = str(task.get("notes", "") or "")
@@ -878,9 +925,16 @@ elif section == "Task Updates":
                     [phase_task["id"] for phase_task in phase_tasks],
                     status,
                     percent,
-                    notes,
+                    "",
                     st.session_state.user_name,
                     selected_owner,
+                )
+                save_workstream_note(
+                    selected_workstream["id"],
+                    selected_workstream["phase_id"],
+                    tasks,
+                    notes,
+                    st.session_state.user_name,
                 )
                 st.success(
                     f"✅ Updated workstream '{task_name}' across {len(phase_tasks)} tasks - logged by {st.session_state.user_name}"
