@@ -94,7 +94,7 @@ def get_drive_service(sa_info: dict) -> Any:
     from googleapiclient.discovery import build
 
     creds = service_account.Credentials.from_service_account_info(
-        sa_info, scopes=["https://www.googleapis.com/auth/drive.readonly"]
+        sa_info, scopes=["https://www.googleapis.com/auth/drive"]
     )
     return build("drive", "v3", credentials=creds)
 
