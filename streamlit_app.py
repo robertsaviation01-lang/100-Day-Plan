@@ -39,10 +39,15 @@ def _fetch_dataroom_files(folder_id: str) -> list:
         return []
 
 
-def _upload_dataroom_file(folder_id: str, file_name: str, file_bytes: bytes, mime_type: str) -> bool:
+def _upload_dataroom_file(
+    folder_id: str,
+    file_name: str,
+    file_bytes: bytes,
+    mime_type: str,
+) -> tuple[bool, str]:
     svc = _get_drive_service()
     if svc is None:
-        return False
+        return False, "Drive service unavailable. Check gcp_service_account secrets."
     try:
         uploaded = dataroom.upload_file_to_folder(
             svc,
@@ -51,9 +56,24 @@ def _upload_dataroom_file(folder_id: str, file_name: str, file_bytes: bytes, mim
             file_bytes=file_bytes,
             mime_type=mime_type or "application/octet-stream",
         )
-        return bool(uploaded and uploaded.get("id"))
-    except Exception:
-        return False
+        if uploaded and uploaded.get("id"):
+            return True, ""
+        return False, "Upload failed: Drive API returned no file id."
+    except Exception as exc:
+        # Google API errors typically include a JSON payload in exc.content.
+        detail = str(exc)
+        content = getattr(exc, "content", b"")
+        if isinstance(content, bytes) and content:
+            try:
+                parsed = json.loads(content.decode("utf-8", errors="ignore"))
+                err = parsed.get("error", {})
+                message = err.get("message") or detail
+                errors = err.get("errors") or []
+                reason = errors[0].get("reason") if errors and isinstance(errors[0], dict) else ""
+                detail = f"{reason}: {message}" if reason else str(message)
+            except Exception:
+                pass
+        return False, f"Drive upload error: {detail}"
 
 
 ALLOWED_UPLOAD_EXTENSIONS = {
@@ -157,7 +177,7 @@ def render_dataroom_resources(
 
                 with st.status("Uploading file", expanded=False) as status:
                     status.write(f"Uploading {upload_file.name}")
-                    saved = _upload_dataroom_file(
+                    saved, upload_error = _upload_dataroom_file(
                         target_folder_id,
                         upload_file.name,
                         file_bytes,
@@ -176,7 +196,7 @@ def render_dataroom_resources(
                     st.rerun()
                 else:
                     progress.empty()
-                    st.warning("Could not upload file. Check Drive permissions for the service account.")
+                    st.warning(upload_error or "Could not upload file. Check Drive permissions for the service account.")
 
         st.divider()
 
