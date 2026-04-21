@@ -804,7 +804,10 @@ def prepare_csv_import_rows(import_df: pd.DataFrame, tasks: list[dict], phases: 
 
 @st.cache_data(ttl=10, show_spinner=False)
 def get_cached_allowed_users() -> list[dict]:
-    return db.get_allowed_users()
+    try:
+        return db.get_allowed_users()
+    except Exception:
+        return []
 
 
 @st.cache_data(ttl=10, show_spinner=False)
@@ -876,9 +879,17 @@ with st.sidebar:
             else:
                 users = get_cached_allowed_users()
                 if not users:
-                    db.upsert_allowed_user(candidate, role="admin", active=True, added_by="Bootstrap")
-                    st.cache_data.clear()
-                allowed_user = db.get_allowed_user(candidate)
+                    try:
+                        db.upsert_allowed_user(candidate, role="admin", active=True, added_by="Bootstrap")
+                        st.cache_data.clear()
+                    except Exception:
+                        st.error("Authentication backend is unavailable. Check Google Sheets service account secrets in Streamlit Cloud.")
+                        st.stop()
+                try:
+                    allowed_user = db.get_allowed_user(candidate)
+                except Exception:
+                    st.error("Authentication backend is unavailable. Check Google Sheets service account secrets in Streamlit Cloud.")
+                    st.stop()
                 if not allowed_user or not allowed_user.get("active", False):
                     st.error("Access denied. Your email is not active in Back Office.")
                 else:
@@ -892,7 +903,11 @@ if not st.session_state.user_email:
     st.info("Login with an approved company email to access the dashboard.")
     st.stop()
 
-current_user = db.get_allowed_user(st.session_state.user_email)
+try:
+    current_user = db.get_allowed_user(st.session_state.user_email)
+except Exception:
+    st.error("Authentication backend is unavailable. Check Google Sheets service account secrets in Streamlit Cloud.")
+    st.stop()
 if not current_user or not current_user.get("active", False):
     st.session_state.user_name = None
     st.session_state.user_email = None
