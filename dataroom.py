@@ -106,6 +106,8 @@ def list_folder_files(drive_service: Any, folder_id: str) -> list[dict]:
         fields="files(id,name,mimeType,webViewLink)",
         pageSize=50,
         orderBy="name",
+        includeItemsFromAllDrives=True,
+        supportsAllDrives=True,
     ).execute()
     return result.get("files", [])
 
@@ -130,7 +132,7 @@ def upload_file_to_folder(
             body=metadata,
             media_body=media,
             fields="id,name,mimeType,webViewLink",
-            supportsAllDrives=False,
+            supportsAllDrives=True,
         )
         .execute()
     )
